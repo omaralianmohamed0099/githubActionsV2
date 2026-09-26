@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  update-readme:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Añadir línea de la nueva feature al README
+        shell: powershell
+        run: |
+          Add-Content -Path README.md -Value "Nueva feature: $env:GITHUB_SHA"
+
+      - name: Commit y push del README actualizado
+        shell: powershell
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add README.md
+          git commit -m "ci: actualiza README con nueva feature [skip ci]"
+          git push origin develop
+
+  validate-dev:
+    needs: update-readme
+    runs-on: self-hosted
+    env:
+      DEV_TOKEN: ${{ secrets.DEV_TOKEN }}
+    steps:
+      - name: Comparar DEV_TOKEN con LOCAL_DEV_TOKEN
+        shell: powershell
+        run: |
+          if ("$env:DEV_TOKEN" -eq "$env:LOCAL_DEV_TOKEN") {
+            Write-Host "✅ Los tokens de desarrollo COINCIDEN"
+          } else {
+            Write-Host "❌ Los tokens de desarrollo NO coinciden"
+            exit 1
+          }
