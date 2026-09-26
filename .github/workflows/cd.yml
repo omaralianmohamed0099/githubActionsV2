@@ -1,0 +1,44 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  bump-version:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Incrementar versión en el README
+        shell: powershell
+        run: |
+          (Get-Content README.md) -replace 'AppVersion-0','AppVersion-1' | Set-Content README.md
+
+      - name: Commit y push del bump de versión
+        shell: powershell
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add README.md
+          git commit -m "cd: bump AppVersion-0 a AppVersion-1 [skip ci]"
+          git push origin main
+
+  validate-prod:
+    needs: bump-version
+    runs-on: self-hosted
+    env:
+      PROD_TOKEN: ${{ secrets.PROD_TOKEN }}
+    steps:
+      - name: Comparar PROD_TOKEN con LOCAL_PROD_TOKEN
+        shell: powershell
+        run: |
+          if ("$env:PROD_TOKEN" -eq "$env:LOCAL_PROD_TOKEN") {
+            Write-Host "✅ Los tokens de producción COINCIDEN"
+          } else {
+            Write-Host "❌ Los tokens de producción NO coinciden"
+            exit 1
+          }
