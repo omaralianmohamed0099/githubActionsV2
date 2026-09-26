@@ -20,12 +20,14 @@ jobs:
 
       - name: Commit y push del README actualizado
         shell: powershell
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add README.md
-	  git commit -m "ci: actualiza README con nueva feature [skip ci]"
-	  git remote set-url origin "https://x-access-token:$env:GH_PAT@github.com/omaralianmohamed0099/githubActionsV2.git"
+          git commit -m "ci: actualiza README con nueva feature [skip ci]"
+          git remote set-url origin "https://x-access-token:$env:GH_PAT@github.com/omaralianmohamed0099/githubActionsV2.git"
           git pull --rebase origin develop
           git push origin develop
 
